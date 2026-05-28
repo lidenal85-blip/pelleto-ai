@@ -1,0 +1,23 @@
+{% extends "admin/base.html" %}
+{% block title %}Диалоги{% endblock %}
+{% block content %}
+<div class="admin-header">
+  <h1>Диалоги агента</h1>
+</div>
+<table class="admin-table">
+  <thead><tr><th>Время</th><th>Вопрос</th><th>Ответ</th><th>Фаза</th><th>OK</th></tr></thead>
+  <tbody>
+  {% for d in logs %}
+  <tr class="{% if d.has_error %}row--error{% endif %}">
+    <td>{{ d.created_at[:16] }}</td>
+    <td>{{ d.question[:80] }}{% if d.question|length > 80 %}...{% endif %}</td>
+    <td>{{ d.answer[:120] }}{% if d.answer|length > 120 %}...{% endif %}</td>
+    <td><span class="badge">{{ d.phase or '-' }}</span></td>
+    <td>{% if not d.has_error %}✅{% else %}⚠️{% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="empty-note">Диалогов пока нет</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

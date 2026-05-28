@@ -1,0 +1,31 @@
+{% extends "admin/base.html" %}
+{% block title %}Дашборд{% endblock %}
+{% block content %}
+<div class="admin-header">
+  <h1>Дашборд</h1>
+  <span style="color:var(--muted);font-size:.85rem">версия {{ version }} — LLM: {{ llm_circuit }}</span>
+</div>
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-card__num">{{ kb_count }}</div>
+    <div class="stat-card__label">Фактов в БЗ</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__num">{{ products_count }}</div>
+    <div class="stat-card__label">Товаров</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__num">{{ pending_count }}</div>
+    <div class="stat-card__label">На модерации</div>
+  </div>
+</div>
+<div class="admin-section">
+  <h2>Быстрые действия</h2>
+  <div class="quick-actions">
+    <a href="/admin/generate" class="btn btn--primary">✨ Сгенерировать</a>
+    <a href="/admin/kb" class="btn btn--outline">➕ База знаний</a>
+    <a href="/admin/queue" class="btn btn--outline">📋 Очередь</a>
+    <a href="/" target="_blank" class="btn btn--outline">🔗 Открыть сайт</a>
+  </div>
+</div>
+{% endblock %}

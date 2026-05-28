@@ -1,0 +1,30 @@
+{% extends "admin/base.html" %}
+{% block title %}Очередь публикации{% endblock %}
+{% block content %}
+<div class="admin-header">
+  <h1>Очередь публикации</h1>
+</div>
+{% for item in items %}
+<div class="queue-card">
+  <div class="queue-card__meta">
+    <span class="badge">{{ item.status }}</span>
+    <span>{{ item.created_at[:16] }}</span>
+  </div>
+  {% set data = item.content_data|tojson %}
+  <h3>{{ item.content_data_parsed.title if item.content_data_parsed else item.id }}</h3>
+  <p>{{ item.content_data_parsed.body[:200] if item.content_data_parsed else '' }}...</p>
+  {% if item.status == 'pending' %}
+  <div class="queue-card__actions">
+    <form method="post" action="/admin/queue/{{ item.id }}/approve" style="display:inline">
+      <button class="btn btn--primary btn--sm">✅ Опубликовать</button>
+    </form>
+    <form method="post" action="/admin/queue/{{ item.id }}/reject" style="display:inline">
+      <button class="btn btn--danger btn--sm">❌ Отклонить</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<p class="empty-note">Очередь пуста. <a href="/admin/generator">Сгенерируйте контент</a>.</p>
+{% endfor %}
+{% endblock %}

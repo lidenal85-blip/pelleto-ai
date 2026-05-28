@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — {% block title %}{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar__logo">🔥 Pelleto</div>
+    <nav class="admin-nav">
+      <a href="/admin/dashboard" class="admin-nav__item {% if active=='dashboard' %}active{% endif %}">📊 Дашборд</a>
+      <a href="/admin/products" class="admin-nav__item {% if active=='products' %}active{% endif %}">📦 Товары</a>
+      <a href="/admin/kb" class="admin-nav__item {% if active=='kb' %}active{% endif %}">🧠 База знаний</a>
+      <a href="/admin/generate" class="admin-nav__item {% if active=='generate' %}active{% endif %}">✨ Генератор</a>
+      <a href="/admin/queue" class="admin-nav__item {% if active=='queue' %}active{% endif %}">📋 Очередь</a>
+      <a href="/admin/dialogues" class="admin-nav__item {% if active=='dialogues' %}active{% endif %}">💬 Диалоги</a>
+      <a href="/admin/logout" class="admin-nav__item admin-nav__item--logout">↪ Выйти</a>
+    </nav>
+  </aside>
+  <main class="admin-main">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>

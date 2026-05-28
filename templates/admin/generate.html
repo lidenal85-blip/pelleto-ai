@@ -1,0 +1,50 @@
+{% extends "admin/base.html" %}
+{% block title %}Генератор{% endblock %}
+{% block content %}
+<div class="admin-header">
+  <h1>Генератор контента</h1>
+</div>
+{% if message %}
+<div class="alert alert--{{ message_type|default('info') }}">{{ message }}</div>
+{% endif %}
+<form class="admin-form" method="post" action="/admin/generator">
+  <div class="form-row">
+    <div>
+      <label class="form-label">Тип контента</label>
+      <select class="form-input" name="task_type">
+        <option value="advice">Совет</option>
+        <option value="faq">FAQ</option>
+      </select>
+    </div>
+    <div>
+      <label class="form-label">Тон</label>
+      <select class="form-input" name="tone">
+        <option value="expert">Экспертный</option>
+        <option value="friendly">Дружелюбный</option>
+        <option value="formal">Формальный</option>
+      </select>
+    </div>
+    <div>
+      <label class="form-label">Объём (симв.)</label>
+      <input class="form-input" type="number" name="volume" value="600" min="200" max="1500">
+    </div>
+  </div>
+  <label class="form-label">Тема</label>
+  <input class="form-input" type="text" name="topic" placeholder="например: хранение пеллет зимой" required>
+  <button class="btn btn--primary" type="submit">✨ Сгенерировать</button>
+</form>
+
+{% if result %}
+<div class="admin-section">
+  <h2>Результат: {% if result.status == 'success' %}✅ Успех{% else %}⚠️ {{ result.status }}{% endif %}</h2>
+  {% if result.status == 'success' %}
+  <div class="preview-card">
+    <h3>{{ result.content.title }}</h3>
+    <p>{{ result.content.body }}</p>
+    <small>Подсказка изображения: {{ result.content.image_hint }}</small>
+  </div>
+  <p>Черновик добавлен в очередь. Откройте → <a href="/admin/queue">Очередь</a></p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

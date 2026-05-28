@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Тёплый Склад — Пеллеты с доставкой по Москве и МО{% endblock %}
+{% block body %}
+
+<!-- HERO -->
+<header class="hero">
+  <nav class="nav container">
+    <div class="nav__logo">🔥 {{ site_name }}</div>
+    <div class="nav__phone"><a href="tel:{{ site_phone }}">{{ site_phone }}</a></div>
+  </nav>
+  <div class="hero__content container">
+    <h1 class="hero__title">Топливные пеллеты<br><span>с доставкой по МО</span></h1>
+    <p class="hero__sub">Древесные гранулы для бытовых и промышленных котлов. От 10 500 ₽/тонну.</p>
+    <div class="hero__actions">
+      <a href="#products" class="btn btn--primary">Смотреть цены</a>
+      <a href="tel:{{ site_phone }}" class="btn btn--outline">Позвонить</a>
+    </div>
+    <div class="hero__badges">
+      <span>✔ Доставка за 24 ч</span>
+      <span>✔ Оплата после доставки</span>
+      <span>✔ От 1 мешка</span>
+    </div>
+  </div>
+</header>
+
+<!-- PRODUCTS -->
+<section id="products" class="products">
+  <div class="container">
+    <h2 class="section-title">Наши пеллеты</h2>
+    <div class="products__grid">
+      {% for p in products %}
+      <div class="product-card">
+        {% if p.photo_url %}
+        <img src="{{ p.photo_url }}" alt="{{ p.name }}" class="product-card__img">
+        {% else %}
+        <div class="product-card__img-placeholder">🌳</div>
+        {% endif %}
+        <div class="product-card__body">
+          <h3 class="product-card__name">{{ p.name }}</h3>
+          <p class="product-card__desc">{{ p.description }}</p>
+          <div class="product-card__price">
+            {% if p.price_min and p.price_max %}
+            {{ "{:,.0f}".format(p.price_min) }} — {{ "{:,.0f}".format(p.price_max) }} ₽/{{ p.unit }}
+            {% elif p.price_min %}
+            от {{ "{:,.0f}".format(p.price_min) }} ₽/{{ p.unit }}
+            {% endif %}
+          </div>
+          <a href="tel:{{ site_phone }}" class="btn btn--primary btn--sm">Заказать</a>
+        </div>
+      </div>
+      {% else %}
+      <p class="empty-note">Продукты временно недоступны. Позвоните нам: <a href="tel:{{ site_phone }}">{{ site_phone }}</a></p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- DELIVERY -->
+<section class="delivery">
+  <div class="container">
+    <h2 class="section-title">Доставка</h2>
+    <div class="delivery__grid">
+      <div class="delivery__item">
+        <div class="delivery__icon">🚚</div>
+        <h3>Быстро</h3>
+        <p>Доставка за 24 ч по Москве и МО</p>
+      </div>
+      <div class="delivery__item">
+        <div class="delivery__icon">📦</div>
+        <h3>Любая фасовка</h3>
+        <p>Мешки 15 кг, биг-бэги, навалом</p>
+      </div>
+      <div class="delivery__item">
+        <div class="delivery__icon">💰</div>
+        <h3>Оплата после</h3>
+        <p>Платите после получения товара</p>
+      </div>
+      <div class="delivery__item">
+        <div class="delivery__icon">🌡️</div>
+        <h3>Хранение</h3>
+        <p>Подскажем правильные условия хранения</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ADVICE BLOCKS -->
+{% if advice_blocks %}
+<section class="advice">
+  <div class="container">
+    <h2 class="section-title">Полезные советы</h2>
+    <div class="advice__grid">
+      {% for block in advice_blocks %}
+      <article class="advice__card">
+        <h3>{{ block.title }}</h3>
+        <p>{{ block.body }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% else %}
+<section class="advice">
+  <div class="container">
+    <h2 class="section-title">Полезные советы</h2>
+    <p class="empty-note">Подробные статьи скоро появятся. Есть вопросы? Спросите нашего ассистента ↓</p>
+  </div>
+</section>
+{% endif %}
+
+<!-- FAQ -->
+{% if faq_blocks %}
+<section class="faq">
+  <div class="container">
+    <h2 class="section-title">Частые вопросы</h2>
+    <div class="faq__list">
+      {% for block in faq_blocks %}
+      <details class="faq__item">
+        <summary>{{ block.title }}</summary>
+        <p>{{ block.body }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- CONTACTS -->
+<section class="contacts" id="contacts">
+  <div class="container">
+    <h2 class="section-title">Контакты</h2>
+    <div class="contacts__grid">
+      <div>
+        <p>📞 <a href="tel:{{ site_phone }}"><strong>{{ site_phone }}</strong></a></p>
+        <p>📍 {{ site_address }}</p>
+        <p>Работаем ежедневно с 8:00 до 20:00</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <p>© 2026 {{ site_name }}. Все права защищены.</p>
+    <span class="footer__version" id="site-version">v{{ site_version }}</span>
+  </div>
+</footer>
+
+{% if agent_enabled %}
+<!-- AGENT WIDGET -->
+<div id="agent-widget">
+  <button id="agent-toggle" class="agent-toggle" title="Спросить консультанта">
+    <span class="agent-toggle__icon">💬</span>
+    <span class="agent-toggle__label">Консультант</span>
+  </button>
+  <div id="agent-chat" class="agent-chat hidden">
+    <div class="agent-chat__header">
+      <span>🔥 Пеллет, ваш консультант</span>
+      <button id="agent-close">&times;</button>
+    </div>
+    <div id="agent-messages" class="agent-chat__messages">
+      <div class="agent-msg agent-msg--bot">Здравствуйте! Я консультант по пеллетам. Что вас интересует?</div>
+    </div>
+    <div class="agent-chat__input">
+      <input id="agent-input" type="text" placeholder="Ваш вопрос..." maxlength="500">
+      <button id="agent-send">→</button>
+    </div>
+  </div>
+</div>
+<script src="/static/js/agent.js"></script>
+{% endif %}
+
+<script>
+// Tap detector: 5 taps on version in 5 seconds -> /admin
+(function(){
+  var el = document.getElementById('site-version');
+  if(!el) return;
+  var taps = [], W = 5000;
+  el.addEventListener('click', function(){
+    var now = Date.now();
+    taps = taps.filter(function(t){ return now - t < W; });
+    taps.push(now);
+    if(taps.length >= 5){ window.location.href = '/admin/login'; }
+  });
+  el.style.cursor = 'pointer';
+  el.title = '';
+})();
+</script>
+
+{% endblock %}

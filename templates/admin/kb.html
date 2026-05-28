@@ -1,0 +1,59 @@
+{% extends "admin/base.html" %}
+{% block title %}База знаний{% endblock %}
+{% block content %}
+<div class="admin-header">
+  <h1>База знаний ({{ total }} записей)</h1>
+  <button class="btn btn--primary" onclick="document.getElementById('fact-form').classList.toggle('hidden')">➕ Добавить факт</button>
+</div>
+
+<form id="fact-form" class="admin-form hidden" method="post" action="/admin/knowledge">
+  <div class="form-row">
+    <div>
+      <label class="form-label">Тип</label>
+      <select class="form-input" name="type">
+        <option value="expert_case">expert_case</option>
+        <option value="spec">spec</option>
+        <option value="price_range">price_range</option>
+        <option value="myth">myth</option>
+        <option value="faq">faq</option>
+      </select>
+    </div>
+    <div>
+      <label class="form-label">Уверенность</label>
+      <select class="form-input" name="confidence">
+        <option value="high">high</option>
+        <option value="medium" selected>medium</option>
+        <option value="low">low</option>
+      </select>
+    </div>
+  </div>
+  <label class="form-label">Темы (topics, через запятую)</label>
+  <input class="form-input" type="text" name="topics" placeholder="хранение, влажность" required>
+  <label class="form-label">Факт</label>
+  <textarea class="form-input" name="fact" rows="3" required></textarea>
+  <label class="form-label">Продажный хук (необязательно)</label>
+  <input class="form-input" type="text" name="sales_hook" placeholder="Мы доставьте за 24 ч...">
+  <button class="btn btn--primary" type="submit">Сохранить</button>
+</form>
+
+<table class="admin-table">
+  <thead><tr><th>Темы</th><th>Факт</th><th>Тип</th><th>Confidence</th><th></th></tr></thead>
+  <tbody>
+  {% for f in facts %}
+  <tr>
+    <td class="cell-topics">{{ f.topics|join(', ') }}</td>
+    <td>{{ f.fact[:120] }}{% if f.fact|length > 120 %}...{% endif %}</td>
+    <td><span class="badge">{{ f.type }}</span></td>
+    <td><span class="badge badge--{{ f.confidence }}">{{ f.confidence }}</span></td>
+    <td>
+      <form method="post" action="/admin/knowledge/{{ f.id }}/delete" style="display:inline">
+        <button class="btn btn--sm btn--danger" type="submit" onclick="return confirm('Удалить?')">🗑</button>
+      </form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="empty-note">База знаний пуста</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
