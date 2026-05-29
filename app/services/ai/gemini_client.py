@@ -120,3 +120,92 @@ def parse_json_response(text: str) -> dict:
 
 def circuit_status() -> str:
     return "open" if _cb_is_open() else "closed"
+
+
+async def call_gemini_with_tools(
+    system_prompt: str,
+    messages: list,
+    tools: list,
+    request_id: str = ""
+) -> dict:
+    """
+    Вызывает Gemini с поддержкой function calling (MCP-инструменты).
+    messages — список {"role": ..., "parts": [...]} в формате Gemini Content.
+    tools — список деклараций инструментов (GEMINI_TOOL_DECLARATIONS из registry).
+    Возвращает {"type": "function_call", "name": ..., "args": {...}}
+               или {"type": "text", "text": "..."}
+    """
+    if _cb_is_open():
+        raise RuntimeError("circuit_open")
+
+    import google.generativeai as genai
+    from google.generativeai.types import FunctionDeclaration, Tool
+
+    global _key_idx
+    attempts = max(len(_KEYS), 1)
+    last_err = None
+
+    # Конвертируем декларации в объекты Gemini SDK
+    fn_declarations = []
+    for t in tools:
+        fn_declarations.append(
+            FunctionDeclaration(
+                name=t["name"],
+                description=t["description"],
+                parameters=t.get("parameters", {})
+            )
+        )
+    gemini_tools = [Tool(function_declarations=fn_declarations)] if fn_declarations else None
+
+    for _ in range(attempts):
+        key = _KEYS[_key_idx % len(_KEYS)] if _KEYS else ""
+        try:
+            genai.configure(api_key=key)
+            model = genai.GenerativeModel(
+                model_name=GEMINI_MODEL,
+                system_instruction=system_prompt,
+                tools=gemini_tools
+            )
+
+            resp = await asyncio.wait_for(
+                asyncio.to_thread(
+                    model.generate_content,
+                    messages,
+                    generation_config={"max_output_tokens": GEMINI_MAX_TOKENS, "temperature": 0.3}
+                ),
+                timeout=GEMINI_TIMEOUT
+            )
+
+            _cb_record_success()
+
+            # Проверяем: function_call или текстовый ответ
+            candidate = resp.candidates[0] if resp.candidates else None
+            if candidate:
+                for part in candidate.content.parts:
+                    if hasattr(part, "function_call") and part.function_call.name:
+                        fc = part.function_call
+                        log.info(f"Gemini function_call: {fc.name} | request_id={request_id}")
+                        return {
+                            "type": "function_call",
+                            "name": fc.name,
+                            "args": dict(fc.args) if fc.args else {}
+                        }
+
+            # Текстовый ответ
+            text = resp.text if hasattr(resp, "text") else ""
+            log.info(f"Gemini tools OK (text) | request_id={request_id}")
+            return {"type": "text", "text": text}
+
+        except Exception as e:
+            err_str = str(e)
+            last_err = e
+            if "429" in err_str or "quota" in err_str.lower():
+                log.warning(f"Gemini tools 429, rotating key | key_idx={_key_idx % len(_KEYS)}")
+                _key_idx += 1
+                continue
+            _cb_record_failure()
+            log.error(f"Gemini tools error | error={err_str} request_id={request_id}")
+            raise
+
+    _cb_record_failure()
+    raise RuntimeError(f"All Gemini keys exhausted (tools): {last_err}")

@@ -71,6 +71,14 @@ app.include_router(landing_router)
 app.include_router(agent_router)
 app.include_router(admin_router)
 
+# MCP-сервер монтируется по пути /mcp (Streamable HTTP transport)
+try:
+    from app.mcp.server import get_mcp_app
+    app.mount("/mcp", get_mcp_app())
+    log.info("MCP server mounted at /mcp")
+except Exception as _mcp_err:
+    log.warning(f"MCP server not mounted: {_mcp_err}")
+
 
 @app.exception_handler(AdminNotAuthenticated)
 async def admin_auth_redirect(request: Request, exc: AdminNotAuthenticated):

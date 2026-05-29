@@ -1,14 +1,16 @@
 """
 app/services/ai/agent.py
-AI-агент: HistorySanitizer, DialoguePhaseTracker, HallucinationGuard, ответ.
+AI-агент: HistorySanitizer, DialoguePhaseTracker, HallucinationGuard,
+          MCP-инструменты через Gemini function calling.
 """
 import re
+import json
 from app.core.config import (
     AGENT_MAX_QUESTION_LEN, AGENT_MAX_HISTORY,
     PHASE_EXPLORATION_AT, PHASE_CLOSING_AT, SITE_PHONE
 )
 from app.services.knowledge import search_facts
-from app.services.ai.gemini_client import call_gemini, parse_json_response
+from app.services.ai.gemini_client import call_gemini, call_gemini_with_tools, parse_json_response
 from app.core.logger import get_logger
 
 log = get_logger("agent")
@@ -17,6 +19,9 @@ FALLBACK_ANSWER = (
     f"Наш консультант временно недоступен. "
     f"Позвоните нам: {SITE_PHONE}"
 )
+
+# Максимум итераций tool-use loop (защита от бесконечных циклов)
+_MAX_TOOL_ITERATIONS = 3
 
 
 def sanitize_history(history: list) -> list:
@@ -43,19 +48,42 @@ def get_phase(history: list) -> str:
     return "closing"
 
 
+def _is_tool_request(question: str) -> bool:
+    """
+    Эвристика: определяет, требует ли вопрос вызова MCP-инструментов.
+    Активируется при явных операционных запросах (не консультация по пеллетам).
+    """
+    tool_keywords = (
+        "логи", "база данных", "схема", "таблица", "бэкап", "резервн",
+        "telegram", "уведомлен", "проверь синтаксис", "структура файла",
+        "мониторинг", "ресурсы", "cpu", "ram", "промпт", "скачай",
+        "markdown", "ресурсы сервера", "time log", "журнал времени"
+    )
+    q_lower = question.lower()
+    return any(kw in q_lower for kw in tool_keywords)
+
+
 async def ask_agent(
     question: str,
     session_id: str,
     history: list,
-    request_id: str = ""
+    request_id: str = "",
+    use_tools: bool = False
 ) -> dict:
     """
     Главная функция агента.
-    Возвращает {answer, cta_show, cta_text, phase, confidence}.
+    Возвращает {answer, cta_show, cta_text, phase, confidence, tool_calls_used}.
+
+    use_tools=True активирует MCP-инструменты через Gemini function calling.
+    Автоматически включается для операционных запросов.
     """
     question = question[:AGENT_MAX_QUESTION_LEN]
     history = sanitize_history(history)
     phase = get_phase(history)
+
+    # Автодетект необходимости инструментов
+    if not use_tools:
+        use_tools = _is_tool_request(question)
 
     # Поиск фактов в KB
     facts = await search_facts(question, min_confidence="medium", limit=5)
@@ -84,9 +112,20 @@ async def ask_agent(
         f"=== ТЕКУЩИЙ ВОПРОС ===\n{question}"
     )
 
+    tool_calls_used: list[str] = []
+
     try:
-        raw = await call_gemini(system_prompt, user_prompt, request_id=request_id)
+        if use_tools:
+            # ── Режим с MCP-инструментами: tool-use loop ─────────────────────
+            raw, tool_calls_used = await _run_with_tools(
+                system_prompt, user_prompt, request_id
+            )
+        else:
+            # ── Обычный режим без инструментов ───────────────────────────────
+            raw = await call_gemini(system_prompt, user_prompt, request_id=request_id)
+
         parsed = parse_json_response(raw)
+
     except RuntimeError as e:
         if "circuit_open" in str(e):
             log.warning(f"Agent: circuit open | request_id={request_id}")
@@ -95,14 +134,16 @@ async def ask_agent(
         return {
             "answer": FALLBACK_ANSWER,
             "cta_show": False, "cta_text": None,
-            "phase": phase, "confidence": "low"
+            "phase": phase, "confidence": "low",
+            "tool_calls_used": tool_calls_used
         }
     except Exception as e:
         log.error(f"Agent: unexpected error | error={str(e)}")
         return {
             "answer": FALLBACK_ANSWER,
             "cta_show": False, "cta_text": None,
-            "phase": phase, "confidence": "low"
+            "phase": phase, "confidence": "low",
+            "tool_calls_used": tool_calls_used
         }
 
     # HallucinationGuard: если confidence=low — предлагаем позвонить
@@ -113,7 +154,8 @@ async def ask_agent(
         return {
             "answer": answer,
             "cta_show": False, "cta_text": None,
-            "phase": phase, "confidence": "low"
+            "phase": phase, "confidence": "low",
+            "tool_calls_used": tool_calls_used
         }
 
     return {
@@ -121,5 +163,61 @@ async def ask_agent(
         "cta_show": bool(parsed.get("cta_show", phase == "closing")),
         "cta_text": parsed.get("cta_text", "Оформить заказ"),
         "phase": phase,
-        "confidence": parsed.get("confidence", "medium")
+        "confidence": parsed.get("confidence", "medium"),
+        "tool_calls_used": tool_calls_used
     }
+
+
+async def _run_with_tools(
+    system_prompt: str,
+    user_prompt: str,
+    request_id: str
+) -> tuple[str, list[str]]:
+    """
+    Tool-use loop: Gemini запрашивает инструменты → выполняем → возвращаем результат.
+    Возвращает (финальный_ответ, список_вызванных_инструментов).
+    """
+    from app.mcp.registry import dispatch_tool, GEMINI_TOOL_DECLARATIONS
+
+    tool_calls_used: list[str] = []
+    messages = [{"role": "user", "parts": [{"text": user_prompt}]}]
+
+    for iteration in range(_MAX_TOOL_ITERATIONS):
+        response = await call_gemini_with_tools(
+            system_prompt=system_prompt,
+            messages=messages,
+            tools=GEMINI_TOOL_DECLARATIONS,
+            request_id=request_id
+        )
+
+        # Если Gemini вернул function_call — выполняем инструмент
+        if response.get("type") == "function_call":
+            fn_name = response["name"]
+            fn_args = response.get("args", {})
+
+            log.info(f"Agent tool call: {fn_name}({list(fn_args.keys())}) | iter={iteration}")
+            tool_calls_used.append(fn_name)
+
+            # Выполняем инструмент
+            tool_result = dispatch_tool(fn_name, fn_args)
+            result_text = json.dumps(tool_result, ensure_ascii=False, default=str)
+
+            # Добавляем вызов и результат в историю диалога с Gemini
+            messages.append({
+                "role": "model",
+                "parts": [{"function_call": {"name": fn_name, "args": fn_args}}]
+            })
+            messages.append({
+                "role": "user",
+                "parts": [{"function_response": {"name": fn_name, "response": {"result": result_text}}}]
+            })
+            # Продолжаем цикл — Gemini формирует следующий шаг
+            continue
+
+        # Gemini вернул текстовый ответ — выходим из цикла
+        return response.get("text", ""), tool_calls_used
+
+    # Превышено число итераций — возвращаем последний текстовый ответ
+    log.warning(f"Agent: tool loop max iterations reached ({_MAX_TOOL_ITERATIONS})")
+    final = await call_gemini(system_prompt, user_prompt, request_id=request_id)
+    return final, tool_calls_used
