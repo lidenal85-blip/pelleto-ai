@@ -4,7 +4,7 @@ app/api/routes/admin.py — M3: админ-панель + M4: автентифи
 import uuid
 from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
+from app.core.templates import templates
 from app.api.deps.auth import require_admin
 from app.services.auth import (
     verify_master_key, check_rate_limit, record_failed_attempt,
@@ -21,7 +21,6 @@ from app.core.config import TEMPLATES_DIR, SITE_VERSION
 from app.core.database import get_db
 
 router = APIRouter(prefix="/admin")
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
 # ── Login ─────────────────────────────────────────────────────────────────────

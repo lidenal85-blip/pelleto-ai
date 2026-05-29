@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
-from app.core.config import PORT, DEBUG, SITE_VERSION, STATIC_DIR, DATA_DIR
+from app.core.config import PORT, DEBUG, SITE_VERSION, STATIC_DIR, DATA_DIR, ROOT_PATH
 from app.core.database import init_db
 from app.core.logger import get_logger
 from app.api.routes.landing import router as landing_router
@@ -19,7 +19,7 @@ log = get_logger("main")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    log.info(f"Starting Pelleto AI v{SITE_VERSION}")
+    log.info(f"Starting Pelleto AI v{SITE_VERSION} root_path='{ROOT_PATH}'")
     await init_db()
     await seed_kb_if_empty()
     log.info(f"Pelleto AI ready on port {PORT}")
@@ -60,6 +60,7 @@ app = FastAPI(
     version=SITE_VERSION,
     debug=DEBUG,
     lifespan=lifespan,
+    root_path=ROOT_PATH,
     docs_url=None,
     redoc_url=None,
 )
@@ -73,7 +74,8 @@ app.include_router(admin_router)
 
 @app.exception_handler(AdminNotAuthenticated)
 async def admin_auth_redirect(request: Request, exc: AdminNotAuthenticated):
-    return RedirectResponse(url="/admin/login", status_code=303)
+    login_url = (ROOT_PATH or "") + "/admin/login"
+    return RedirectResponse(url=login_url, status_code=303)
 
 
 @app.get("/health")
@@ -83,6 +85,7 @@ async def health():
     return {
         "status": "ok",
         "version": SITE_VERSION,
+        "root_path": ROOT_PATH,
         "agent_enabled": AGENT_ENABLED,
         "llm_circuit": circuit_status(),
     }

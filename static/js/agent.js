@@ -5,7 +5,8 @@
   var SESSION_KEY = 'pelleto_session';
   var HISTORY_KEY = 'pelleto_history';
   var MAX_HISTORY = 10;
-  var ORDER_URL   = '/order';
+  var ROOT_PATH   = (document.body.dataset.rootPath || '');
+  var ORDER_URL   = ROOT_PATH + '/order';
 
   // Генерация session_id
   function getSession(){
@@ -72,7 +73,7 @@
     var history = getHistory();
     var requestId = 'r-'+Math.random().toString(36).slice(2);
 
-    fetch('/api/agent/chat', {
+    fetch(ROOT_PATH + '/api/agent/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

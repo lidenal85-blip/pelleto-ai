@@ -7,7 +7,7 @@
 {% if message %}
 <div class="alert alert--{{ message_type|default('info') }}">{{ message }}</div>
 {% endif %}
-<form class="admin-form" method="post" action="/admin/generator">
+<form class="admin-form" method="post" action="{{ root_path }}/admin/generator">
   <div class="form-row">
     <div>
       <label class="form-label">Тип контента</label>
@@ -43,7 +43,7 @@
     <p>{{ result.content.body }}</p>
     <small>Подсказка изображения: {{ result.content.image_hint }}</small>
   </div>
-  <p>Черновик добавлен в очередь. Откройте → <a href="/admin/queue">Очередь</a></p>
+  <p>Черновик добавлен в очередь. Откройте → <a href="{{ root_path }}/admin/queue">Очередь</a></p>
   {% endif %}
 </div>
 {% endif %}

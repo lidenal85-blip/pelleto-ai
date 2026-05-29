@@ -3,12 +3,11 @@ app/api/routes/landing.py — M1: публичная страница.
 """
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from app.core.templates import templates
 from app.services.content import get_published_blocks, list_products
 from app.core.config import TEMPLATES_DIR, SITE_NAME, SITE_PHONE, SITE_ADDRESS, SITE_VERSION, AGENT_ENABLED
 
 router = APIRouter()
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 
 @router.get("/", response_class=HTMLResponse)

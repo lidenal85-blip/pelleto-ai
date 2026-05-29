@@ -45,7 +45,7 @@
             от {{ "{:,.0f}".format(p.price_min) }} ₽/{{ p.unit }}
             {% endif %}
           </div>
-          <a href="/order" class="btn btn--primary btn--sm">Заказать</a>
+          <a href="{{ root_path }}/order" class="btn btn--primary btn--sm">Заказать</a>
         </div>
       </div>
       {% else %}
@@ -168,7 +168,7 @@
     </div>
   </div>
 </div>
-<script src="/static/js/agent.js"></script>
+<script src="{{ root_path }}/static/js/agent.js"></script>
 {% endif %}
 
 <script>

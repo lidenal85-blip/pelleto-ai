@@ -6,7 +6,7 @@
   <button class="btn btn--primary" onclick="document.getElementById('fact-form').classList.toggle('hidden')">➕ Добавить факт</button>
 </div>
 
-<form id="fact-form" class="admin-form hidden" method="post" action="/admin/knowledge">
+<form id="fact-form" class="admin-form hidden" method="post" action="{{ root_path }}/admin/knowledge">
   <div class="form-row">
     <div>
       <label class="form-label">Тип</label>
@@ -46,7 +46,7 @@
     <td><span class="badge">{{ f.type }}</span></td>
     <td><span class="badge badge--{{ f.confidence }}">{{ f.confidence }}</span></td>
     <td>
-      <form method="post" action="/admin/knowledge/{{ f.id }}/delete" style="display:inline">
+      <form method="post" action="{{ root_path }}/admin/knowledge/{{ f.id }}/delete" style="display:inline">
         <button class="btn btn--sm btn--danger" type="submit" onclick="return confirm('Удалить?')">🗑</button>
       </form>
     </td>

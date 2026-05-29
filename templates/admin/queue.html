@@ -15,16 +15,16 @@
   <p>{{ item.content_data_parsed.body[:200] if item.content_data_parsed else '' }}...</p>
   {% if item.status == 'pending' %}
   <div class="queue-card__actions">
-    <form method="post" action="/admin/queue/{{ item.id }}/approve" style="display:inline">
+    <form method="post" action="{{ root_path }}/admin/queue/{{ item.id }}/approve" style="display:inline">
       <button class="btn btn--primary btn--sm">✅ Опубликовать</button>
     </form>
-    <form method="post" action="/admin/queue/{{ item.id }}/reject" style="display:inline">
+    <form method="post" action="{{ root_path }}/admin/queue/{{ item.id }}/reject" style="display:inline">
       <button class="btn btn--danger btn--sm">❌ Отклонить</button>
     </form>
   </div>
   {% endif %}
 </div>
 {% else %}
-<p class="empty-note">Очередь пуста. <a href="/admin/generator">Сгенерируйте контент</a>.</p>
+<p class="empty-note">Очередь пуста. <a href="{{ root_path }}/admin/generator">Сгенерируйте контент</a>.</p>
 {% endfor %}
 {% endblock %}

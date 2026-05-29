@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Вход — Pelleto Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/css/admin.css">
+<link rel="stylesheet" href="{{ root_path }}/static/css/admin.css">
 </head>
 <body class="admin-body login-body">
 <div class="login-wrap">
@@ -14,7 +14,7 @@
     {% if error %}
     <div class="alert alert--error">{{ error }}</div>
     {% endif %}
-    <form method="post" action="/admin/login">
+    <form method="post" action="{{ root_path }}/admin/login">
       <label class="form-label">Мастер-ключ</label>
       <input class="form-input" type="password" name="master_key" placeholder="введите ключ..." autofocus required>
       <button class="btn btn--primary btn--full" type="submit">Войти</button>

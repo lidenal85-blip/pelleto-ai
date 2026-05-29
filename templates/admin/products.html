@@ -6,7 +6,7 @@
   <button class="btn btn--primary" onclick="document.getElementById('product-form').classList.toggle('hidden')">➕ Добавить</button>
 </div>
 
-<form id="product-form" class="admin-form hidden" method="post" action="/admin/products">
+<form id="product-form" class="admin-form hidden" method="post" action="{{ root_path }}/admin/products">
   <div class="form-row">
     <div>
       <label class="form-label">Название</label>
@@ -46,7 +46,7 @@
     <td>{{ p.unit }}</td>
     <td>{% if p.active %}✅{% else %}❌{% endif %}</td>
     <td>
-      <form method="post" action="/admin/products/{{ p.id }}/delete" style="display:inline">
+      <form method="post" action="{{ root_path }}/admin/products/{{ p.id }}/delete" style="display:inline">
         <button class="btn btn--sm btn--danger" type="submit" onclick="return confirm('Удалить?')">🗑</button>
       </form>
     </td>
