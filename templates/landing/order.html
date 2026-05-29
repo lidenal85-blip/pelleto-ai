@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Оформить заказ — {{ site_name }}{% endblock %}
+{% block body %}
+<header class="hero" style="padding-bottom:40px">
+  <nav class="nav container">
+    <a class="nav__logo" href="/" style="text-decoration:none">&#128293; {{ site_name }}</a>
+    <div class="nav__phone"><a href="tel:{{ site_phone }}">{{ site_phone }}</a></div>
+  </nav>
+</header>
+<section style="padding:60px 0 80px">
+  <div class="container" style="max-width:640px">
+    <h1 class="section-title">Оформить заказ</h1>
+    <p style="color:var(--muted);margin-bottom:32px">Заполните форму — менеджер перезвонит в 30 минут и уточнит детали.</p>
+    <div id="order-form">
+      <div class="form-group">
+        <label class="form-label">Ваше имя *</label>
+        <input class="form-input" id="f-name" type="text" placeholder="Иван Петров" maxlength="100">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Телефон *</label>
+        <input class="form-input" id="f-phone" type="tel" placeholder="+7 (999) 000-00-00" maxlength="20">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Адрес доставки</label>
+        <input class="form-input" id="f-address" type="text" placeholder="Москва, ул. Лесная, д. 5" maxlength="200">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Объём / пожелания</label>
+        <textarea class="form-input" id="f-comment" rows="3" maxlength="500" style="resize:vertical" placeholder="Например: 2 тонны, мешки по 15 кг"></textarea>
+      </div>
+      <div id="form-error" style="color:#e53e3e;margin-bottom:12px;display:none"></div>
+      <div id="form-ok" style="display:none;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:20px 24px;color:#166534">
+        <strong>&#10003; Заявка принята!</strong><br>Менеджер перезвонит вам в течение 30 минут.<br>
+        Или позвоните сами: <a href="tel:{{ site_phone }}" style="color:#166534">{{ site_phone }}</a>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:8px" id="btns">
+        <button class="btn btn--primary" id="order-submit">Отправить заявку</button>
+        <a href="/" class="btn btn--outline">&#8592; Назад</a>
+      </div>
+    </div></div></section>
+<footer class="footer"><div class="container"><p>&copy; 2026 {{ site_name }}.</p><a href="tel:{{ site_phone }}" style="color:var(--amber)">{{ site_phone }}</a></div></footer>
+<style>
+.form-group{margin-bottom:20px}
+.form-label{display:block;font-weight:600;color:var(--green);margin-bottom:6px;font-size:.95rem}
+.form-input{width:100%;border:1.5px solid #d8d0c4;border-radius:var(--radius);padding:11px 14px;font-size:1rem;font-family:inherit;outline:none;transition:.2s;background:var(--white)}
+.form-input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(232,162,58,.15)}
+</style>
+<script>
+(function(){
+  document.getElementById("order-submit").addEventListener("click",go);
+  function go(){
+    var n=document.getElementById("f-name").value.trim();
+    var p=document.getElementById("f-phone").value.trim();
+    var e=document.getElementById("form-error");
+    e.style.display="none";
+    if(!n){e.textContent="Введите имя";e.style.display="block";return;}
+    if(!p){e.textContent="Введите телефон";e.style.display="block";return;}
+    var btn=document.getElementById("order-submit");btn.disabled=true;btn.textContent="Отправляем...";
+    fetch("/api/order",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n,phone:p,address:document.getElementById("f-address").value.trim(),comment:document.getElementById("f-comment").value.trim()})})
+    .finally(function(){
+      document.getElementById("form-ok").style.display="block";
+      document.getElementById("btns").style.display="none";
+      document.querySelectorAll("#order-form .form-group").forEach(function(x){x.style.display="none";});
+    });
+  }
+})();
+</script>
+{% endblock %}

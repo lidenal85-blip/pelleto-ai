@@ -17,45 +17,33 @@ async def search_facts(
     min_confidence: str = "medium",
     limit: int = 5
 ) -> list[dict]:
-    """
-    FTS5-поиск по fact + topics_text.
-    min_confidence: high > medium > low
-    """
+    """LIKE-search fallback (no FTS5)."""
     conf_order = {"high": 3, "medium": 2, "low": 1}
     min_val = conf_order.get(min_confidence, 2)
-
     async with get_db() as db:
         if query.strip():
-            fts_query = " OR ".join(query.split())
-            sql = """
-                SELECT kf.*
-                FROM knowledge_fts
-                JOIN knowledge_facts kf ON kf.id = knowledge_fts.id
-                WHERE knowledge_fts MATCH ?
-                  AND (CASE kf.confidence WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END) >= ?
-                ORDER BY rank
-                LIMIT ?
-            """
-            params = (fts_query, min_val, limit)
+            words = query.split()[:6]
+            cond = " OR ".join(["(fact LIKE ? OR topics LIKE ?)" for _ in words])
+            p = []
+            for w in words:
+                p += [f"%{w}%", f"%{w}%"]
+            p += [min_val, limit]
+            sql = ("SELECT * FROM knowledge_facts WHERE (" + cond +
+                   ") AND (CASE confidence WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END) >= ?"
+                   " ORDER BY confidence DESC, created_at DESC LIMIT ?")
         else:
-            sql = """
-                SELECT * FROM knowledge_facts
-                WHERE (CASE confidence WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END) >= ?
-                ORDER BY created_at DESC
-                LIMIT ?
-            """
-            params = (min_val, limit)
-
-        async with db.execute(sql, params) as cur:
+            sql = ("SELECT * FROM knowledge_facts WHERE "
+                   "(CASE confidence WHEN 'high' THEN 3 WHEN 'medium' THEN 2 ELSE 1 END) >= ?"
+                   " ORDER BY created_at DESC LIMIT ?")
+            p = [min_val, limit]
+        async with db.execute(sql, p) as cur:
             rows = await cur.fetchall()
-
     result = []
     for row in rows:
         d = dict(row)
-        d["topics"] = json.loads(d.get("topics", "[]"))
-        d["countries"] = json.loads(d.get("countries", '["ru"]'))
+        d["topics"] = __import__('json').loads(d.get("topics", "[]"))
+        d["countries"] = __import__('json').loads(d.get("countries", '["ru"]'))
         result.append(d)
-
     log.info(f"KB search | query={query[:50]} found={len(result)}")
     return result
 

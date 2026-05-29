@@ -3,14 +3,16 @@ main.py — точка входа FastAPI приложения Pelleto AI.
 """
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from app.core.config import PORT, DEBUG, SITE_VERSION, STATIC_DIR, DATA_DIR
 from app.core.database import init_db
 from app.core.logger import get_logger
 from app.api.routes.landing import router as landing_router
 from app.api.routes.agent import router as agent_router
 from app.api.routes.admin import router as admin_router
+from app.api.deps.auth import AdminNotAuthenticated
 
 log = get_logger("main")
 
@@ -67,6 +69,11 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 app.include_router(landing_router)
 app.include_router(agent_router)
 app.include_router(admin_router)
+
+
+@app.exception_handler(AdminNotAuthenticated)
+async def admin_auth_redirect(request: Request, exc: AdminNotAuthenticated):
+    return RedirectResponse(url="/admin/login", status_code=303)
 
 
 @app.get("/health")
