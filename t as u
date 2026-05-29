@@ -1,0 +1,23 @@
+[0;1;32m●[0m pelleto.service - Pelleto AI FastAPI App
+     Loaded: loaded (]8;;file://LEVIATHAN/etc/systemd/system/pelleto.service/etc/systemd/system/pelleto.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;32mactive (running)[0m since Fri 2026-05-29 00:28:58 UTC; 27min ago
+   Main PID: 2656713 (python3)
+      Tasks: 10 (limit: 4601)
+     Memory: 104.7M (peak: 105.2M)
+        CPU: 13.761s
+     CGroup: /system.slice/pelleto.service
+             ├─[0;38;5;245m2656713 /usr/bin/python3 -m uvicorn main:app --host 127.0.0.1 --port 8131 --workers 2[0m
+             ├─[0;38;5;245m2656715 /usr/bin/python3 -c "from multiprocessing.resource_tracker import main;main(6)"[0m
+             ├─[0;38;5;245m2656716 /usr/bin/python3 -c "from multiprocessing.spawn import spawn_main; spawn_main(tracker_fd=7, pipe_handle=9)" --multiprocessing-fork[0m
+             └─[0;38;5;245m2656717 /usr/bin/python3 -c "from multiprocessing.spawn import spawn_main; spawn_main(tracker_fd=7, pipe_handle=13)" --multiprocessing-fork[0m
+
+May 29 00:29:04 LEVIATHAN pelleto[2656716]: INFO:     127.0.0.1:44364 - "GET /health HTTP/1.1" 200 OK
+May 29 00:29:23 LEVIATHAN pelleto[2656717]: INFO:     78.17.24.96:0 - "GET /health HTTP/1.0" 200 OK
+May 29 00:29:23 LEVIATHAN pelleto[2656717]: INFO:     78.17.24.96:0 - "GET / HTTP/1.0" 200 OK
+May 29 00:53:24 LEVIATHAN pelleto[2656717]: INFO:     37.153.125.74:0 - "GET / HTTP/1.0" 200 OK
+May 29 00:53:24 LEVIATHAN pelleto[2656717]: INFO:     37.153.125.74:0 - "GET /pelleto/static/css/main.css HTTP/1.0" 200 OK
+May 29 00:53:24 LEVIATHAN pelleto[2656717]: INFO:     37.153.125.74:0 - "GET /pelleto/static/js/agent.js HTTP/1.0" 200 OK
+May 29 00:53:24 LEVIATHAN pelleto[2656717]: INFO:     37.153.125.74:0 - "GET /pelleto/static/js/main.js HTTP/1.0" 200 OK
+May 29 00:54:53 LEVIATHAN pelleto[2656717]: INFO:     78.17.24.96:0 - "GET /health HTTP/1.0" 200 OK
+May 29 00:54:53 LEVIATHAN pelleto[2656716]: INFO:     78.17.24.96:0 - "GET / HTTP/1.0" 200 OK
+May 29 00:54:53 LEVIATHAN pelleto[2656716]: INFO:     78.17.24.96:0 - "GET /admin/login HTTP/1.0" 200 OK
