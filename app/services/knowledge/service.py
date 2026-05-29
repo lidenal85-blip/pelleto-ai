@@ -22,8 +22,8 @@ async def search_facts(
     min_val = conf_order.get(min_confidence, 2)
     async with get_db() as db:
         if query.strip():
-            words = query.split()[:6]
-            cond = " OR ".join(["(fact LIKE ? OR topics LIKE ?)" for _ in words])
+            import re as _re; raw_words = _re.sub(r"[^\w\s]", " ", query).split(); words = [w.lower() for w in raw_words if len(w) > 2][:6] or raw_words[:3]
+            cond = " OR ".join(["(LOWER(fact) LIKE ? OR LOWER(topics) LIKE ?)" for _ in words])
             p = []
             for w in words:
                 p += [f"%{w}%", f"%{w}%"]
